@@ -1,0 +1,244 @@
+/* Open-Source Win9x Authentic Font (SIL Open Font License) */
+@font-face {
+  font-family: "W95FA";
+  src: url("/fonts/w95fa.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "W95FA";
+  src: url("/fonts/w95fa.woff2") format("woff2");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  font-size: 16px;
+  --win9x-font-size: 0.9375rem; /* ~15px */
+  --win9x-font-size-mono: 0.875rem; /* ~14px */
+  --win9x-font-size-sm: 0.8125rem; /* ~13px */
+  --win9x-row-height: 1.85rem; /* ~30px */
+  line-height: 1.35;
+  --win9x-bg: #c0c0c0;
+  --win9x-bg-light: #dfdfdf;
+  --win9x-bg-dark: #808080;
+  --win9x-border-light: #ffffff;
+  --win9x-border-dark: #808080;
+  --win9x-border-black: #000000;
+  --win9x-navy: #000080;
+  --win9x-navy-light: #1084d0;
+  --win9x-text: #000000;
+  --win9x-text-disabled: #808080;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "W95FA", "Tahoma", "Segoe UI", "Ubuntu", sans-serif;
+  font-size: var(--win9x-font-size);
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--win9x-bg);
+  color: var(--win9x-text);
+  user-select: none;
+}
+
+/* Custom Win9x Scrollbars */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+  background-color: var(--win9x-bg-light);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--win9x-bg-light);
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--win9x-bg);
+  border: 1px solid var(--win9x-border-black);
+  box-shadow: inset 1px 1px 0px #ffffff, inset -1px -1px 0px var(--win9x-bg-dark);
+}
+
+::-webkit-scrollbar-thumb:active {
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-dark), inset -1px -1px 0px #ffffff;
+}
+
+/* Win9x 3D Borders */
+.win9x-raised {
+  border-top: 1px solid var(--win9x-border-light);
+  border-left: 1px solid var(--win9x-border-light);
+  border-right: 1px solid var(--win9x-border-black);
+  border-bottom: 1px solid var(--win9x-border-black);
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-light), inset -1px -1px 0px var(--win9x-bg-dark);
+}
+
+.win9x-inset {
+  border-top: 1px solid var(--win9x-bg-dark);
+  border-left: 1px solid var(--win9x-bg-dark);
+  border-right: 1px solid var(--win9x-border-light);
+  border-bottom: 1px solid var(--win9x-border-light);
+  box-shadow: inset 1px 1px 0px var(--win9x-border-black), inset -1px -1px 0px var(--win9x-bg-light);
+  background-color: #ffffff;
+}
+
+.win9x-panel-inset {
+  border-top: 1px solid var(--win9x-bg-dark);
+  border-left: 1px solid var(--win9x-bg-dark);
+  border-right: 1px solid var(--win9x-border-light);
+  border-bottom: 1px solid var(--win9x-border-light);
+  box-shadow: inset 1px 1px 0px var(--win9x-border-black), inset -1px -1px 0px var(--win9x-bg-light);
+  background-color: var(--win9x-bg);
+}
+
+/* Win9x Buttons */
+.win9x-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--win9x-bg);
+  border-top: 1px solid var(--win9x-border-light);
+  border-left: 1px solid var(--win9x-border-light);
+  border-right: 1px solid var(--win9x-border-black);
+  border-bottom: 1px solid var(--win9x-border-black);
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-light), inset -1px -1px 0px var(--win9x-bg-dark);
+  padding: 0.15rem 0.55rem;
+  min-height: 1.65rem;
+  cursor: pointer;
+  color: var(--win9x-text);
+  font-size: var(--win9x-font-size);
+  line-height: 1.35;
+  font-weight: normal;
+  text-decoration: none;
+  outline: none;
+}
+
+.win9x-button:active:not(:disabled) {
+  border-top: 1px solid var(--win9x-border-black);
+  border-left: 1px solid var(--win9x-border-black);
+  border-right: 1px solid var(--win9x-border-light);
+  border-bottom: 1px solid var(--win9x-border-light);
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-dark);
+  padding: 0.2rem 0.5rem 0.1rem 0.6rem;
+}
+
+.win9x-button:disabled {
+  color: var(--win9x-text-disabled);
+  text-shadow: 1px 1px 0px #ffffff;
+  cursor: default;
+}
+
+/* Win9x Inputs */
+.win9x-input {
+  border-top: 1px solid var(--win9x-bg-dark);
+  border-left: 1px solid var(--win9x-bg-dark);
+  border-right: 1px solid var(--win9x-border-light);
+  border-bottom: 1px solid var(--win9x-border-light);
+  box-shadow: inset 1px 1px 0px var(--win9x-border-black);
+  background-color: #ffffff;
+  padding: 0.15rem 0.4rem;
+  outline: none;
+  font-size: var(--win9x-font-size);
+  line-height: 1.35;
+}
+
+/* Win9x Title Bars */
+.win9x-titlebar {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: var(--win9x-font-size);
+  min-height: 1.55rem;
+  display: flex;
+  align-items: center;
+  padding: 0.1rem 0.35rem;
+  line-height: 1.35;
+}
+
+/* Win9x Table Styles */
+.win9x-th {
+  background-color: var(--win9x-bg);
+  border-top: 1px solid var(--win9x-border-light);
+  border-left: 1px solid var(--win9x-border-light);
+  border-right: 1px solid var(--win9x-border-black);
+  border-bottom: 1px solid var(--win9x-border-black);
+  box-shadow: inset 1px 1px 0px var(--win9x-bg-light), inset -1px -1px 0px var(--win9x-bg-dark);
+  padding: 0.2rem 0.45rem;
+  font-weight: bold;
+  font-size: var(--win9x-font-size-mono);
+  line-height: 1.35;
+  text-align: left;
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.win9x-tr {
+  height: var(--win9x-row-height);
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.win9x-tr:hover:not(.selected) {
+  background-color: #e8e8e8;
+}
+
+.win9x-tr.selected {
+  background-color: var(--win9x-navy) !important;
+  color: #ffffff !important;
+}
+
+.win9x-tr.selected * {
+  color: #ffffff !important;
+}
+
+/* Win9x Status Bar segments */
+.win9x-status-segment {
+  border-top: 1px solid var(--win9x-bg-dark);
+  border-left: 1px solid var(--win9x-bg-dark);
+  border-right: 1px solid var(--win9x-border-light);
+  border-bottom: 1px solid var(--win9x-border-light);
+  padding: 0.15rem 0.45rem;
+  background-color: var(--win9x-bg);
+  font-size: var(--win9x-font-size-sm);
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+}
+
+/* Win9x Tabs */
+.win9x-tab {
+  border-top: 1px solid var(--win9x-border-light);
+  border-left: 1px solid var(--win9x-border-light);
+  border-right: 1px solid var(--win9x-border-black);
+  background-color: var(--win9x-bg);
+  padding: 0.25rem 0.75rem;
+  font-size: var(--win9x-font-size);
+  line-height: 1.35;
+  cursor: pointer;
+  margin-right: 2px;
+  margin-bottom: -1px;
+}
+
+.win9x-tab.active {
+  font-weight: bold;
+  padding-bottom: 0.35rem;
+  background-color: var(--win9x-bg);
+  border-bottom: none;
+  z-index: 10;
+}
