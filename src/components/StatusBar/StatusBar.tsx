@@ -8,6 +8,10 @@ export const StatusBar: React.FC = () => {
   const movies = useMediaStore((s) => s.movies);
   const tvShows = useMediaStore((s) => s.tvShows);
   const watcherStatus = useMediaStore((s) => s.watcherStatus);
+  const isImdbInstalled = useMediaStore((s) => s.isImdbInstalled);
+  const isImdbSyncing = useMediaStore((s) => s.isImdbSyncing);
+  const imdbSyncProgress = useMediaStore((s) => s.imdbSyncProgress);
+  const startImdbDownload = useMediaStore((s) => s.startImdbDownload);
 
   let displayMsg = statusMessage;
   if (isScanning && scanProgress) {
@@ -38,6 +42,40 @@ export const StatusBar: React.FC = () => {
           ? `👁 Watching (${watcherStatus.watched_roots_count})`
           : "👁 Watching: Off"}
       </div>
+
+      {/* IMDb Dataset Lifecycle Segment */}
+      {isImdbSyncing ? (
+        <div
+          className="win9x-status-segment h-[1.65rem] w-64 text-blue-900 font-bold justify-start px-2 truncate"
+          title={imdbSyncProgress || "IMDb sync active"}
+        >
+          <span className="truncate">⏳ {imdbSyncProgress || "IMDb syncing..."}</span>
+        </div>
+      ) : isImdbInstalled === false ? (
+        <div
+          className="win9x-status-segment h-[1.65rem] w-48 text-[#880000] font-medium justify-between px-1.5"
+          title="IMDb offline dataset is not installed. Click to download in background."
+        >
+          <span className="truncate">IMDb: Missing</span>
+          <button
+            onClick={() => startImdbDownload()}
+            className="win9x-button !px-1.5 !py-0 text-[0.75rem] font-bold text-blue-900"
+          >
+            Download
+          </button>
+        </div>
+      ) : isImdbInstalled === true ? (
+        <div
+          className="win9x-status-segment h-[1.65rem] w-36 text-[#005500] font-medium justify-center truncate"
+          title="IMDb offline dataset is installed and ready"
+        >
+          ✓ IMDb Ready
+        </div>
+      ) : (
+        <div className="win9x-status-segment h-[1.65rem] w-36 text-gray-500 justify-center truncate">
+          IMDb: Checking...
+        </div>
+      )}
 
       {/* Library Stats Segment */}
       <div className="win9x-status-segment h-[1.65rem] w-52 justify-center truncate font-mono">

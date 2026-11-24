@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 use crate::naming::nfo::generate_movie_nfo;
 use crate::providers::engine::MetadataEngine;
@@ -555,4 +555,102 @@ pub async fn index_imdb_from_local(
     }
 
     Ok(format!("Successfully indexed: {}", indexed_summary.join(", ")))
+}
+
+#[tauri::command]
+pub fn is_imdb_installed(imdb_state: State<'_, ImdbDbState>) -> Result<bool, String> {
+    let conn = imdb_state.0.lock().map_err(|e| e.to_string())?;
+    Ok(crate::providers::imdb::downloader::is_imdb_installed(&conn))
+}
+
+#[tauri::command]
+pub fn is_imdb_stale(imdb_state: State<'_, ImdbDbState>) -> Result<bool, String> {
+    let conn = imdb_state.0.lock().map_err(|e| e.to_string())?;
+    Ok(crate::providers::imdb::downloader::is_imdb_stale(&conn))
+}
+
+#[tauri::command]
+pub fn is_imdb_syncing() -> Result<bool, String> {
+    Ok(crate::providers::imdb::downloader::is_downloading())
+}
+
+#[tauri::command]
+pub async fn download_and_index_imdb(
+    imdb_state: State<'_, ImdbDbState>,
+    app_handle: AppHandle,
+) -> Result<String, String> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app_data_dir: {}", e))?;
+
+    crate::providers::imdb::downloader::download_and_index_imdb_pipeline(
+        app_data_dir,
+        imdb_state.0.clone(),
+        Some(app_handle),
+    )
+    .await
+}
+
+#[tauri::command]
+pub async fn auto_refresh_imdb_if_stale(
+    db_state: State<'_, DbState>,
+    imdb_state: State<'_, ImdbDbState>,
+    app_handle: AppHandle,
+) -> Result<bool, String> {
+    let auto_refresh_enabled = {
+        let conn = db_state.0.lock().map_err(|e| e.to_string())?;
+        crate::db::queries::get_setting(&conn, "imdb_auto_refresh_enabled")
+            .ok()
+            .flatten()
+            .map(|v| v != "0" && v.to_lowercase() != "false")
+            .unwrap_or(true)
+    };
+
+    if !auto_refresh_enabled {
+        log::info!("IMDb auto-refresh is disabled in settings; skipping auto-refresh.");
+        return Ok(false);
+    }
+
+    let installed = {
+        let conn = imdb_state.0.lock().map_err(|e| e.to_string())?;
+        crate::providers::imdb::downloader::is_imdb_installed(&conn)
+    };
+
+    if !installed {
+        log::info!("IMDb is not yet installed; skipping auto-refresh.");
+        return Ok(false);
+    }
+
+    let stale = {
+        let conn = imdb_state.0.lock().map_err(|e| e.to_string())?;
+        crate::providers::imdb::downloader::is_imdb_stale(&conn)
+    };
+
+    if !stale {
+        log::info!("IMDb dataset is up-to-date (<7 days old); skipping auto-refresh.");
+        return Ok(false);
+    }
+
+    log::info!("IMDb dataset is >7 days old. Launching automatic background refresh...");
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app_data_dir: {}", e))?;
+    let conn_arc = imdb_state.0.clone();
+    let app_h = app_handle.clone();
+
+    tokio::spawn(async move {
+        if let Err(e) = crate::providers::imdb::downloader::download_and_index_imdb_pipeline(
+            app_data_dir,
+            conn_arc,
+            Some(app_h),
+        )
+        .await
+        {
+            log::error!("Background IMDb auto-refresh failed: {}", e);
+        }
+    });
+
+    Ok(true)
 }

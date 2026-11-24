@@ -24,6 +24,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir().expect("failed to get app data dir");
+            providers::imdb::downloader::clean_temp_dir(&app_data_dir);
             let conn = db::init_db(&app_data_dir).expect("failed to init db");
             let db_arc = Arc::new(Mutex::new(conn));
             app.manage(DbState(db_arc.clone()));
@@ -85,6 +86,11 @@ pub fn run() {
             commands::providers::check_imdb_updates,
             commands::providers::get_imdb_sync_status,
             commands::providers::index_imdb_from_local,
+            commands::providers::is_imdb_installed,
+            commands::providers::is_imdb_stale,
+            commands::providers::is_imdb_syncing,
+            commands::providers::download_and_index_imdb,
+            commands::providers::auto_refresh_imdb_if_stale,
             // Phase 3: Renamer & Undo
             commands::renamer::plan_rename_movie,
             commands::renamer::plan_rename_tv_show,

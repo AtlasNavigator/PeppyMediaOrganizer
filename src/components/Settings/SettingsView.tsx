@@ -15,6 +15,11 @@ export const SettingsView: React.FC = () => {
   const uiScale = useMediaStore((s) => s.uiScale);
   const systemTextScale = useMediaStore((s) => s.systemTextScale);
   const setUiScale = useMediaStore((s) => s.setUiScale);
+  const isImdbSyncing = useMediaStore((s) => s.isImdbSyncing);
+  const imdbSyncProgress = useMediaStore((s) => s.imdbSyncProgress);
+  const imdbAutoRefreshEnabled = useMediaStore((s) => s.imdbAutoRefreshEnabled);
+  const startImdbDownload = useMediaStore((s) => s.startImdbDownload);
+  const setImdbAutoRefreshEnabled = useMediaStore((s) => s.setImdbAutoRefreshEnabled);
 
   const [activeTab, setActiveTab] = useState<"roots" | "display" | "providers" | "imdb" | "priorities" | "mediainfo" | "rules" | "about">("roots");
 
@@ -712,6 +717,59 @@ export const SettingsView: React.FC = () => {
                 PeppyMediaOrganizer can index IMDb's non-commercial TSV dumps (<code>title.basics.tsv.gz</code>, <code>title.ratings.tsv.gz</code>, <code>title.episode.tsv.gz</code>) into a dedicated SQLite cache. This allows instant title/year and <code>tt-ID</code> lookup without requiring an API.
               </p>
 
+              {/* Online Direct Download & Auto-Refresh */}
+              <div className="win9x-panel-inset p-2.5 space-y-2.5 bg-[#f0f0f0]">
+                <div className="font-bold text-black flex justify-between items-center">
+                  <span>Download Upstream Datasets (datasets.imdbws.com)</span>
+                  <span className="text-[10px] font-mono text-gray-600">Strictly writes to app_data_dir</span>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-[10px]">
+                  Downloads <code>title.basics</code>, <code>title.ratings</code>, and <code>title.episode</code> (~100MB compressed), streams each directly into <code>imdb.db</code>, and deletes temporary <code>.tsv.gz</code> archives immediately to save disk space.
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => startImdbDownload()}
+                    disabled={isImdbSyncing}
+                    className="win9x-button font-bold text-blue-900 !px-4 !py-1"
+                  >
+                    {isImdbSyncing ? "⏳ Downloading & Indexing..." : "▶ Download & Index Latest Datasets"}
+                  </button>
+                  {isImdbSyncing && (
+                    <span className="font-mono text-blue-900 text-[10px] animate-pulse">
+                      Processing in background...
+                    </span>
+                  )}
+                </div>
+
+                {/* Auto-Refresh Toggle */}
+                <div className="win9x-inset p-2 bg-white flex items-center justify-between">
+                  <div>
+                    <label className="font-bold text-black flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={imdbAutoRefreshEnabled}
+                        onChange={(e) => setImdbAutoRefreshEnabled(e.target.checked)}
+                        className="cursor-pointer"
+                      />
+                      <span>Automatically refresh IMDb dataset in background when older than 7 days</span>
+                    </label>
+                    <div className="text-[10px] text-gray-500 ml-5 mt-0.5">
+                      Checks sync timestamp on startup. Re-indexes in the background and cleans up temporary archives automatically.
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold ${imdbAutoRefreshEnabled ? "text-green-800" : "text-gray-500"}`}>
+                    {imdbAutoRefreshEnabled ? "Auto-Refresh: ON" : "Auto-Refresh: OFF"}
+                  </span>
+                </div>
+
+                {imdbSyncProgress && (
+                  <div className="text-[10px] font-mono text-blue-900 bg-white p-1.5 win9x-inset">
+                    {imdbSyncProgress}
+                  </div>
+                )}
+              </div>
+
               {/* Local Folder Ingestion */}
               <div className="win9x-panel-inset p-2.5 space-y-2">
                 <div className="font-bold">Index from Local Files (No Download Required)</div>
@@ -727,7 +785,7 @@ export const SettingsView: React.FC = () => {
                   </button>
                   <button
                     onClick={handleIndexLocalImdb}
-                    disabled={isIndexingImdb}
+                    disabled={isIndexingImdb || isImdbSyncing}
                     className="win9x-button font-bold text-blue-900 !px-3"
                   >
                     {isIndexingImdb ? "Indexing..." : "▶ Ingest & Index Local Files"}
@@ -755,7 +813,7 @@ export const SettingsView: React.FC = () => {
                   ))}
                   {syncStatus.length === 0 && (
                     <div className="col-span-3 text-center text-gray-500 p-2 win9x-inset">
-                      No datasets indexed yet. Click "Ingest & Index Local Files" above.
+                      No datasets indexed yet. Use online download above or index from local files.
                     </div>
                   )}
                 </div>
@@ -767,7 +825,7 @@ export const SettingsView: React.FC = () => {
                   <span className="font-bold">Upstream Daily Dataset Check (datasets.imdbws.com)</span>
                   <button
                     onClick={handleCheckUpstream}
-                    disabled={isCheckingUpdates}
+                    disabled={isCheckingUpdates || isImdbSyncing}
                     className="win9x-button font-bold text-xs"
                   >
                     {isCheckingUpdates ? "Checking..." : "Check for Updates"}

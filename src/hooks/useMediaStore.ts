@@ -102,6 +102,18 @@ interface MediaStore {
   systemTextScale: number;
   initUiScale: () => Promise<void>;
   setUiScale: (scale: number) => Promise<void>;
+
+  // Phase 2: IMDb Local Dataset Lifecycle
+  isImdbInstalled: boolean | null;
+  isImdbSyncing: boolean;
+  imdbSyncProgress: string | null;
+  imdbPromptDismissed: boolean;
+  imdbAutoRefreshEnabled: boolean;
+  loadImdbStatus: () => Promise<void>;
+  dismissImdbPrompt: () => void;
+  startImdbDownload: () => Promise<void>;
+  checkAndAutoRefreshImdb: () => Promise<void>;
+  setImdbAutoRefreshEnabled: (enabled: boolean) => Promise<void>;
 }
 
 export const useMediaStore = create<MediaStore>((set, get) => ({
@@ -544,6 +556,83 @@ export const useMediaStore = create<MediaStore>((set, get) => ({
       await api.setAppSetting("ui_scale", clamped.toString());
     } catch (err) {
       console.error("Failed to set window zoom:", err);
+    }
+  },
+
+  // Phase 2: IMDb Local Dataset Lifecycle
+  isImdbInstalled: null,
+  isImdbSyncing: false,
+  imdbSyncProgress: null,
+  imdbPromptDismissed: false,
+  imdbAutoRefreshEnabled: true,
+
+  loadImdbStatus: async () => {
+    try {
+      const [installed, syncing, autoRefresh] = await Promise.all([
+        api.isImdbInstalled(),
+        api.isImdbSyncing(),
+        api.getAppSetting("imdb_auto_refresh_enabled"),
+      ]);
+      set({
+        isImdbInstalled: installed,
+        isImdbSyncing: syncing,
+        imdbAutoRefreshEnabled:
+          autoRefresh !== null
+            ? autoRefresh !== "0" && autoRefresh.toLowerCase() !== "false"
+            : true,
+      });
+    } catch (err) {
+      console.error("loadImdbStatus error:", err);
+    }
+  },
+
+  dismissImdbPrompt: () => {
+    set({ imdbPromptDismissed: true });
+  },
+
+  startImdbDownload: async () => {
+    const { isImdbSyncing } = get();
+    if (isImdbSyncing) return;
+    set({
+      isImdbSyncing: true,
+      imdbSyncProgress: "Starting download of title.basics, title.ratings, title.episode...",
+    });
+    try {
+      const msg = await api.downloadAndIndexImdb();
+      set({
+        isImdbInstalled: true,
+        isImdbSyncing: false,
+        imdbSyncProgress: msg,
+      });
+    } catch (err) {
+      console.error("startImdbDownload error:", err);
+      set({
+        isImdbSyncing: false,
+        imdbSyncProgress: `Download failed: ${err}`,
+      });
+    }
+  },
+
+  checkAndAutoRefreshImdb: async () => {
+    try {
+      const triggered = await api.autoRefreshImdbIfStale();
+      if (triggered) {
+        set({
+          isImdbSyncing: true,
+          imdbSyncProgress: "Refreshing IMDb dataset in background (>7 days old)...",
+        });
+      }
+    } catch (err) {
+      console.warn("checkAndAutoRefreshImdb check failed:", err);
+    }
+  },
+
+  setImdbAutoRefreshEnabled: async (enabled: boolean) => {
+    set({ imdbAutoRefreshEnabled: enabled });
+    try {
+      await api.setAppSetting("imdb_auto_refresh_enabled", enabled ? "1" : "0");
+    } catch (err) {
+      console.error("Failed to save imdb_auto_refresh_enabled setting:", err);
     }
   },
 }));

@@ -112,6 +112,16 @@ export const api = {
     invoke<string>("index_imdb_from_local", {
       folderPath,
     }),
+  isImdbInstalled: () =>
+    invoke<boolean>("is_imdb_installed"),
+  isImdbStale: () =>
+    invoke<boolean>("is_imdb_stale"),
+  isImdbSyncing: () =>
+    invoke<boolean>("is_imdb_syncing"),
+  downloadAndIndexImdb: () =>
+    invoke<string>("download_and_index_imdb"),
+  autoRefreshImdbIfStale: () =>
+    invoke<boolean>("auto_refresh_imdb_if_stale"),
 
   // Phase 3: Renamer & Reversible Undo
   planRenameMovie: (movieId: number) =>

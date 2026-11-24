@@ -9,8 +9,10 @@ import { DetailPane } from "./components/DetailPane/DetailPane";
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { SettingsView } from "./components/Settings/SettingsView";
 import { RenameModal } from "./components/RenameModal/RenameModal";
+import { ImdbNotice } from "./components/ImdbNotice/ImdbNotice";
 import { useMediaStore } from "./hooks/useMediaStore";
 import { useScanProgress } from "./hooks/useScanProgress";
+import { listen } from "@tauri-apps/api/event";
 
 export const App: React.FC = () => {
   const activeSection = useMediaStore((s) => s.activeSection);
@@ -32,6 +34,8 @@ export const App: React.FC = () => {
   const uiScale = useMediaStore((s) => s.uiScale);
   const initUiScale = useMediaStore((s) => s.initUiScale);
   const setUiScale = useMediaStore((s) => s.setUiScale);
+  const loadImdbStatus = useMediaStore((s) => s.loadImdbStatus);
+  const checkAndAutoRefreshImdb = useMediaStore((s) => s.checkAndAutoRefreshImdb);
 
   // Hook into scan events from backend
   useScanProgress();
@@ -44,7 +48,41 @@ export const App: React.FC = () => {
     checkCanUndo();
     loadWatcherStatus();
     initUiScale();
-  }, [loadLibraryRoots, loadMovies, loadTvShows, checkCanUndo, loadWatcherStatus, initUiScale]);
+    loadImdbStatus();
+    checkAndAutoRefreshImdb();
+  }, [
+    loadLibraryRoots,
+    loadMovies,
+    loadTvShows,
+    checkCanUndo,
+    loadWatcherStatus,
+    initUiScale,
+    loadImdbStatus,
+    checkAndAutoRefreshImdb,
+  ]);
+
+  // Listen to IMDb progress events globally
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<any>("imdb:index_progress", (event) => {
+      const payload = event.payload;
+      if (payload) {
+        useMediaStore.setState({
+          imdbSyncProgress: payload.message,
+          isImdbSyncing: !payload.is_finished,
+        });
+        if (payload.is_finished) {
+          loadImdbStatus();
+        }
+      }
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [loadImdbStatus]);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -108,6 +146,9 @@ export const App: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col bg-[#c0c0c0] overflow-hidden select-none">
+      {/* Startup & Ingestion Non-Blocking Notice */}
+      <ImdbNotice />
+
       {/* 3-Column Shell */}
       <div className="flex-1 flex flex-row min-h-0 overflow-hidden p-1 gap-1">
         {/* Left Column: Sidebar */}

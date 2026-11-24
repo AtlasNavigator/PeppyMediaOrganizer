@@ -1,4 +1,5 @@
 pub mod db;
+pub mod downloader;
 pub mod indexer;
 
 use std::sync::{Arc, Mutex};
